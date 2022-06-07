@@ -19,14 +19,14 @@ class TechnicalIndicators:
     willy: float
     willy_ema: float
 
-    def get_values(self):
+    def get_values(self) -> List[float]:
         attribute_names = self.__annotations__.keys()
         return [self.__getattribute__(field_name) for field_name in attribute_names]
 
 
 class Assumptions:
     def __init__(self, n_candles_since_open: int, ti_vals: TechnicalIndicators) -> None:
-        self.n_candles_since_open = n_candles_since_open
+        self.n_candles_since_open = float(n_candles_since_open)
         self.ti_vals = ti_vals
 
     def create_aat_tuple(self) -> List[float]:
