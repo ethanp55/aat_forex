@@ -1,6 +1,7 @@
 from dataclasses import dataclass
 import enum
 from pandas._libs.tslib import Timestamp
+from typing import Optional
 
 
 class TradeType(enum.Enum):
@@ -16,5 +17,6 @@ class Trade:
     stop_gain: float
     n_units: int
     original_units: int
+    pips_risked: float
     start_date: Timestamp
-    end_date: Timestamp
+    end_date: Optional[Timestamp]
