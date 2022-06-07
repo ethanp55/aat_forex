@@ -17,6 +17,7 @@ class DirectionalBarsStrategy(Strategy):
         self.pip_movement = pip_movement
         self.use_pullback = use_pullback
         self.lookback = self.n_bars + 1 if self.use_pullback else n_bars
+        self.starting_idx = self.lookback
         self.lookforward = -1 if self.use_pullback else 0
 
     def place_trade(self, curr_idx: int, market_data: DataFrame, currency_pair: CurrencyPairs) -> Optional[Trade]:
