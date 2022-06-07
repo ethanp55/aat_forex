@@ -1,6 +1,6 @@
-from currency_pairs import CurrencyPairs
+from market_proxy.currency_pairs import CurrencyPairs
+from market_proxy.trades import TradeType, Trade
 import numpy as np
-from trades import TradeType, Trade
 
 value_per_pip = 1.0
 AMOUNTS_PER_DAY = [-0.00008, -0.0001, -0.00012]
