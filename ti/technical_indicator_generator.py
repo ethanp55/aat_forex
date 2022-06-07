@@ -124,9 +124,9 @@ class TechnicalIndicatorGenerator(object):
     @staticmethod
     def n_macd(macd, macdsignal, lookback=50):
         n_macd = 2 * (
-        ((macd - macd.rolling(lookback).min()) / (macd.rolling(lookback).max() - macd.rolling(lookback).min()))) - 1
+            ((macd - macd.rolling(lookback).min()) / (macd.rolling(lookback).max() - macd.rolling(lookback).min()))) - 1
         n_macdsignal = 2 * (((macdsignal - macdsignal.rolling(lookback).min()) / (
-                    macdsignal.rolling(lookback).max() - macdsignal.rolling(lookback).min()))) - 1
+                macdsignal.rolling(lookback).max() - macdsignal.rolling(lookback).min()))) - 1
 
         return n_macd, n_macdsignal
 
@@ -151,7 +151,8 @@ class TechnicalIndicatorGenerator(object):
 
     @staticmethod
     def supertrend(barsdata, atr_len=3, mult=3):
-        curr_atr = TechnicalIndicatorGenerator.atr(barsdata['Mid_High'], barsdata['Mid_Low'], barsdata['Mid_Close'], lookback=atr_len)
+        curr_atr = TechnicalIndicatorGenerator.atr(barsdata['Mid_High'], barsdata['Mid_Low'], barsdata['Mid_Close'],
+                                                   lookback=atr_len)
         highs, lows = barsdata['Mid_High'], barsdata['Mid_Low']
         hl2 = (highs + lows) / 2
         final_upperband = hl2 + mult * curr_atr
@@ -214,9 +215,10 @@ class TechnicalIndicatorGenerator(object):
         ha_l_ema = pd.Series.ewm(pd.DataFrame({'ha_low': ha_low}), span=ema_period).mean()
         ha_c_ema = pd.Series.ewm(pd.DataFrame({'ha_close': ha_close}), span=ema_period).mean()
 
-        return pd.Series.ewm(ha_o_ema, span=smoothing_period).mean(), pd.Series.ewm(ha_h_ema,
-                                                                                    span=smoothing_period).mean(), pd.Series.ewm(
-            ha_l_ema, span=smoothing_period).mean(), pd.Series.ewm(ha_c_ema, span=smoothing_period).mean()
+        return pd.Series.ewm(ha_o_ema, span=smoothing_period).mean(), \
+               pd.Series.ewm(ha_h_ema, span=smoothing_period).mean(), \
+               pd.Series.ewm(ha_l_ema, span=smoothing_period).mean(), \
+               pd.Series.ewm(ha_c_ema, span=smoothing_period).mean()
 
     @staticmethod
     def williams_r(highs, lows, closes, length=21, ema_length=15):
