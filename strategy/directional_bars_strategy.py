@@ -1,3 +1,4 @@
+from aat.aat_market_trainer import AatMarketTrainer
 from datetime import datetime
 from pandas import DataFrame
 from market_proxy.currency_pairs import CurrencyPairs
@@ -105,14 +106,9 @@ class DirectionalBarsStrategy(Strategy):
 
         return trade
 
-    def run_strategy(self, currency_pair: CurrencyPairs) -> StrategyResults:
+    def run_strategy(self, currency_pair: CurrencyPairs, aat_trainer: Optional[AatMarketTrainer] = None) -> \
+            StrategyResults:
         self.currency_pair = currency_pair
         market_data = DataRetriever.get_data_for_pair(currency_pair)
 
-        return MarketSimulator.run_simulation(self, market_data)
-
-
-bar_strategy = DirectionalBarsStrategy(0, 2.0, 0.1, False, 3, 20, True)
-results = bar_strategy.run_strategy(CurrencyPairs.EUR_USD)
-
-print(results)
+        return MarketSimulator.run_simulation(self, market_data, aat_trainer)

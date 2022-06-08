@@ -4,6 +4,27 @@ import pandas as pd
 
 class TechnicalIndicatorGenerator(object):
     @staticmethod
+    def add_indicators(df):
+        df['ema200'] = pd.Series.ewm(df['Mid_Close'], span=200).mean()
+        df['ema100'] = pd.Series.ewm(df['Mid_Close'], span=100).mean()
+        df['atr'] = TechnicalIndicatorGenerator.atr(df['Mid_High'], df['Mid_Low'], df['Mid_Close'])
+        df['atr_sma'] = df['atr'].rolling(window=20).mean()
+        df['rsi'] = TechnicalIndicatorGenerator.rsi(df['Mid_Close'])
+        df['rsi_sma'] = df['rsi'].rolling(50).mean()
+        df['adx'] = TechnicalIndicatorGenerator.adx(df['Mid_High'], df['Mid_Low'], df['Mid_Close'])
+        df['macd'] = pd.Series.ewm(df['Mid_Close'], span=12).mean() - pd.Series.ewm(df['Mid_Close'], span=26).mean()
+        df['macdsignal'] = pd.Series.ewm(df['macd'], span=9).mean()
+        df['slowk_rsi'], df['slowd_rsi'] = TechnicalIndicatorGenerator.stoch_rsi(df['rsi'])
+        df['vo'] = TechnicalIndicatorGenerator.vo(df['Volume'])
+        df['willy'], df['willy_ema'] = TechnicalIndicatorGenerator.williams_r(df['Mid_High'], df['Mid_Low'],
+                                                                              df['Mid_Close'])
+
+        df.dropna(inplace=True)
+        df.reset_index(drop=True, inplace=True)
+
+        return df
+
+    @staticmethod
     def psar(barsdata, iaf=0.02, maxaf=0.2):
         length = len(barsdata)
         high = list(barsdata['Mid_High'])

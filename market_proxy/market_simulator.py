@@ -1,26 +1,32 @@
+from aat.aat_market_trainer import AatMarketTrainer
 from datetime import datetime
 from pandas import DataFrame
 from market_proxy.market_calculations import MarketCalculations
+from market_proxy.trades import TradeType
 import numpy as np
 from strategy.strategy_class import Strategy
 from strategy.strategy_results import StrategyResults
-from market_proxy.trades import TradeType
+from typing import Optional
 
 
 class MarketSimulator(object):
     @staticmethod
-    def run_simulation(strategy: Strategy, market_data: DataFrame) -> StrategyResults:
+    def run_simulation(strategy: Strategy, market_data: DataFrame, aat_trainer: Optional[AatMarketTrainer] = None) -> \
+            StrategyResults:
         reward, n_wins, n_losses, win_streak, loss_streak, curr_win_streak, curr_loss_streak, n_buys, n_sells, \
             day_fees = 0, 0, 0, 0, 0, 0, 0, 0, 0, 0  # Numerical results we keep track of
-        pips_risked, trade = [], None  # Objects we use
+        pips_risked, trade, n_candles = [], None, 0
 
         for idx in range(strategy.starting_idx, len(market_data)):
+            n_candles += 1
+
             # If there is no open trade, check to see if we should place one
             if trade is None:
                 trade = strategy.place_trade(idx, market_data)
 
                 if trade is not None:
                     pips_risked.append(trade.pips_risked)
+                    n_candles = 0
 
                     if trade.trade_type == TradeType.BUY:
                         n_buys += 1
@@ -36,6 +42,9 @@ class MarketSimulator(object):
             # the trade (set it to None); and continue to the next iteration in the simulation loop (continue to the
             # next candle)
             if trade is not None:
+                if aat_trainer is not None:
+                    aat_trainer.record_tuple(idx, n_candles, market_data)
+
                 curr_bid_open, curr_bid_high, curr_bid_low, curr_ask_open, curr_ask_high, curr_ask_low, curr_mid_open, \
                     curr_date = market_data.loc[market_data.index[idx], ['Bid_Open', 'Bid_High', 'Bid_Low', 'Ask_Open',
                                                                          'Ask_High', 'Ask_Low', 'Mid_Open', 'Date']]
@@ -60,6 +69,9 @@ class MarketSimulator(object):
 
                     trade = None
 
+                    if aat_trainer is not None:
+                        aat_trainer.trade_finished(trade_amount + day_fees)
+
                     continue
 
                 # Condition 2 - Trade is a buy and the take profit/stop gain is hit
@@ -81,6 +93,9 @@ class MarketSimulator(object):
                         loss_streak = curr_loss_streak
 
                     trade = None
+
+                    if aat_trainer is not None:
+                        aat_trainer.trade_finished(trade_amount + day_fees)
 
                     continue
 
@@ -104,6 +119,9 @@ class MarketSimulator(object):
 
                     trade = None
 
+                    if aat_trainer is not None:
+                        aat_trainer.trade_finished(trade_amount + day_fees)
+
                     continue
 
                 # Condition 4 - Trade is a sell and the take profit/stop gain is hit
@@ -126,7 +144,14 @@ class MarketSimulator(object):
 
                     trade = None
 
+                    if aat_trainer is not None:
+                        aat_trainer.trade_finished(trade_amount + day_fees)
+
                     continue
+
+        # Record any AAT training data
+        if aat_trainer is not None:
+            aat_trainer.save_data()
 
         # Return the simulation results once we've iterated through all the data
         avg_pips_risked = np.array(pips_risked).mean() if len(pips_risked) > 0 else np.nan

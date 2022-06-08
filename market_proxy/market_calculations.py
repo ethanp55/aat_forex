@@ -2,8 +2,8 @@ from market_proxy.currency_pairs import CurrencyPairs
 from market_proxy.trades import TradeType, Trade
 import numpy as np
 
-value_per_pip = 1.0
 AMOUNTS_PER_DAY = [-0.00008, -0.0001, -0.00012]
+AMOUNT_TO_RISK = 50.0
 
 
 class MarketCalculations(object):
@@ -29,7 +29,7 @@ class MarketCalculations(object):
         else:
             per_pip = 0.0001 / mid_open if second != 'Jpy' else 0.01 / mid_open
 
-        n_units = int(50 / (pips_to_risk_calc * per_pip))
+        n_units = int(AMOUNT_TO_RISK / (pips_to_risk_calc * per_pip))
 
         return n_units
 

@@ -25,11 +25,12 @@ class TechnicalIndicators:
 
 
 class Assumptions:
-    def __init__(self, n_candles_since_open: int, ti_vals: TechnicalIndicators) -> None:
+    def __init__(self, n_candles_since_open: int, ti_vals: TechnicalIndicators, prediction: float) -> None:
         self.n_candles_since_open = float(n_candles_since_open)
         self.ti_vals = ti_vals
+        self.prediction = prediction
 
     def create_aat_tuple(self) -> List[float]:
-        return [self.n_candles_since_open] + self.ti_vals.get_values()
+        return [self.n_candles_since_open] + self.ti_vals.get_values() + [self.prediction, self.prediction]
 
 
