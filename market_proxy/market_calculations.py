@@ -31,5 +31,8 @@ class MarketCalculations(object):
 
         n_units = int(AMOUNT_TO_RISK / (pips_to_risk_calc * per_pip))
 
+        if second == 'Jpy':
+            n_units /= 100
+
         return n_units
 

@@ -6,11 +6,11 @@ from pandas import DataFrame
 import pickle
 from sklearn.neighbors import NearestNeighbors
 from sklearn.preprocessing import StandardScaler
+from typing import Optional
 
 
 class AatMarketTrainer:
-    def __init__(self, currency_pair: CurrencyPairs, risk_reward_ratio: float) -> None:
-        self.currency_pair = currency_pair
+    def __init__(self, risk_reward_ratio: float) -> None:
         self.risk_reward_ratio = risk_reward_ratio
         self.baseline = self.risk_reward_ratio * AMOUNT_TO_RISK
 
@@ -20,13 +20,13 @@ class AatMarketTrainer:
     def trade_finished(self, net_profit: float) -> None:
         pass
 
-    def save_data(self) -> None:
+    def save_data(self, currency_pair: Optional[CurrencyPairs] = None) -> None:
         pass
 
 
 class KnnAatMarketTrainer(AatMarketTrainer):
-    def __init__(self, currency_pair: CurrencyPairs, risk_reward_ratio: float) -> None:
-        AatMarketTrainer.__init__(self, currency_pair, risk_reward_ratio)
+    def __init__(self, risk_reward_ratio: float) -> None:
+        AatMarketTrainer.__init__(self, risk_reward_ratio)
         self.training_data = []
         self.curr_trade_data = []
 
@@ -53,10 +53,13 @@ class KnnAatMarketTrainer(AatMarketTrainer):
         self.training_data.extend(self.curr_trade_data)
         self.curr_trade_data.clear()
 
-    def save_data(self) -> None:
+    def save_data(self, currency_pair: Optional[CurrencyPairs] = None) -> None:
         data_dir = '../aat/training_data'
 
-        with open(f'{data_dir}/{self.currency_pair.value}_training_data.pickle', 'wb') as f:
+        file_path = f'{data_dir}/{currency_pair.value}_training_data.pickle' if currency_pair is not None else \
+            f'{data_dir}/training_data.pickle'
+
+        with open(file_path, 'wb') as f:
             pickle.dump(self.training_data, f)
 
         x = np.array(self.training_data)[:, 0:-2]
@@ -71,8 +74,10 @@ class KnnAatMarketTrainer(AatMarketTrainer):
         model = NearestNeighbors(n_neighbors=15)
         model.fit(x_scaled)
 
-        trained_knn_file = f'{self.currency_pair.value}_trained_knn_aat.pickle'
-        trained_knn_scaler_file = f'{self.currency_pair.value}_trained_knn_scaler_aat.pickle'
+        trained_knn_file = f'{currency_pair.value}_trained_knn_aat.pickle' if currency_pair is not None else \
+            'trained_knn_aat.pickle'
+        trained_knn_scaler_file = f'{currency_pair.value}_trained_knn_scaler_aat.pickle' if currency_pair is not None \
+            else 'trained_knn_scaler_aat.pickle'
 
         with open(f'{data_dir}/{trained_knn_file}', 'wb') as f:
             pickle.dump(model, f)
