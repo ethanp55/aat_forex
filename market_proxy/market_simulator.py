@@ -17,6 +17,14 @@ class MarketSimulator(object):
         if aat_trainer is not None and aat_tester is not None:
             raise Exception('Cannot both train and test AAT at the same time; please train before testing')
 
+        if aat_trainer is not None:
+            cutoff_idx = int(len(market_data) * aat_trainer.training_data_percentage)
+            market_data = market_data.iloc[0:cutoff_idx, :]
+
+        elif aat_tester is not None:
+            cutoff_idx = int(len(market_data) * (1 - aat_tester.testing_data_percentage))
+            market_data = market_data.iloc[cutoff_idx:, :]
+
         reward, n_wins, n_losses, win_streak, loss_streak, curr_win_streak, curr_loss_streak, n_buys, n_sells, \
             day_fees = 0, 0, 0, 0, 0, 0, 0, 0, 0, 0  # Numerical results we keep track of
         pips_risked, trade, n_candles = [], None, 0

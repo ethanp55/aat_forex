@@ -1,15 +1,20 @@
 from aat.assumptions import Assumptions, TechnicalIndicators
+from aat.aat_market_trainer import CNN_LOOKBACK, grab_image_data
 from market_proxy.currency_pairs import CurrencyPairs
 from market_proxy.market_calculations import AMOUNT_TO_RISK
 import numpy as np
 from pandas import DataFrame
 import pickle
+from tensorflow.keras.models import load_model
 from typing import Optional
 
 
 class AatMarketTester:
-    def __init__(self, risk_reward_ratio: float) -> None:
+    def __init__(self, risk_reward_ratio: float, testing_data_percentage: float) -> None:
         self.risk_reward_ratio = risk_reward_ratio
+        if not 0.0 < testing_data_percentage < 1.0:
+            raise Exception(f'Testing data percentage is not between 0 and 1: {testing_data_percentage}')
+        self.testing_data_percentage = testing_data_percentage
         self.baseline = self.risk_reward_ratio * AMOUNT_TO_RISK
 
     def make_prediction(self, curr_idx: int, n_candles: int, market_data: DataFrame) -> float:
@@ -17,8 +22,9 @@ class AatMarketTester:
 
 
 class KnnAatMarketTester(AatMarketTester):
-    def __init__(self, risk_reward_ratio: float, currency_pair: Optional[CurrencyPairs] = None) -> None:
-        AatMarketTester.__init__(self, risk_reward_ratio)
+    def __init__(self, risk_reward_ratio: float, currency_pair: Optional[CurrencyPairs] = None,
+                 testing_data_percentage: float = 0.3) -> None:
+        AatMarketTester.__init__(self, risk_reward_ratio, testing_data_percentage)
         self.currency_pair = currency_pair
         self.scaler = None
         self.knn_model = None
@@ -72,5 +78,31 @@ class KnnAatMarketTester(AatMarketTester):
             distance_weight = inverse_distance_i / inverse_distance_sum
 
             trade_amount_pred += (self.baseline * cor * distance_weight)
+
+        return trade_amount_pred
+
+
+class CnnAatMarketTester(AatMarketTester):
+    def __init__(self, risk_reward_ratio: float, currency_pair: Optional[CurrencyPairs] = None,
+                 testing_data_percentage: float = 0.3) -> None:
+        AatMarketTester.__init__(self, risk_reward_ratio, testing_data_percentage)
+        self.currency_pair = currency_pair
+        path = f'../aat/training_data/{currency_pair.value}_trained_cnn' if currency_pair is not None \
+            else '../aat/training_data/trained_cnn'
+        self.cnn_model = load_model(path)
+
+    def make_prediction(self, curr_idx: int, n_candles: int, market_data: DataFrame) -> float:
+        if curr_idx < CNN_LOOKBACK:
+            first_n = CNN_LOOKBACK - curr_idx
+            curr_x = [market_data.iloc[0, :-2]] * first_n
+            curr_x += list(market_data.iloc[0:curr_idx, 0:-2])
+
+        else:
+            curr_x = list(market_data.iloc[curr_idx - CNN_LOOKBACK:curr_idx, :-2])
+
+        curr_x = grab_image_data(curr_x)
+
+        trade_amount_pred = self.cnn_model.predict(curr_x.reshape(1, curr_x.shape[0], curr_x.shape[1],
+                                                                  curr_x.shape[2]))[0]
 
         return trade_amount_pred

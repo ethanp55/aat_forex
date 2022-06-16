@@ -18,8 +18,11 @@ CNN_LOOKBACK = 12
 
 
 class AatMarketTrainer:
-    def __init__(self, risk_reward_ratio: float) -> None:
+    def __init__(self, risk_reward_ratio: float, training_data_percentage: float) -> None:
         self.risk_reward_ratio = risk_reward_ratio
+        if not 0.0 < training_data_percentage < 1.0:
+            raise Exception(f'Training data percentage is not between 0 and 1: {training_data_percentage}')
+        self.training_data_percentage = training_data_percentage
         self.baseline = self.risk_reward_ratio * AMOUNT_TO_RISK
 
     def record_tuple(self, curr_idx: int, n_candles: int, market_data: DataFrame) -> None:
@@ -33,8 +36,8 @@ class AatMarketTrainer:
 
 
 class KnnAatMarketTrainer(AatMarketTrainer):
-    def __init__(self, risk_reward_ratio: float) -> None:
-        AatMarketTrainer.__init__(self, risk_reward_ratio)
+    def __init__(self, risk_reward_ratio: float, training_data_percentage: float = 0.7) -> None:
+        AatMarketTrainer.__init__(self, risk_reward_ratio, training_data_percentage)
         self.training_data = []
         self.curr_trade_data = []
 
@@ -94,9 +97,16 @@ class KnnAatMarketTrainer(AatMarketTrainer):
             pickle.dump(scaler, f)
 
 
+def grab_image_data(subset):
+    gasf_transformer = GramianAngularField(method='summation')
+    gasf_subset = gasf_transformer.transform(subset)
+
+    return gasf_subset
+
+
 class CnnAatMarketTrainer(AatMarketTrainer):
-    def __init__(self, risk_reward_ratio: float) -> None:
-        AatMarketTrainer.__init__(self, risk_reward_ratio)
+    def __init__(self, risk_reward_ratio: float, training_data_percentage: float = 0.7) -> None:
+        AatMarketTrainer.__init__(self, risk_reward_ratio, training_data_percentage)
         self.training_data = []
         self.curr_trade_data = []
 
@@ -146,30 +156,23 @@ class CnnAatMarketTrainer(AatMarketTrainer):
         print(x.shape)
 
     def fit_cnn(self, currency_pair: Optional[CurrencyPairs] = None) -> None:
-        def grab_image_data(subset):
-            gasf_transformer = GramianAngularField(method='summation')
-            gasf_subset = gasf_transformer.transform(subset)
-
-            return gasf_subset
+        print('Reading in data...')
 
         data_path = f'../aat/training_data/{currency_pair.value}_training_data_cnn.pickle' if \
             currency_pair is not None else '../aat/training_data/training_data_cnn.pickle'
 
         training_data = np.array(pickle.load(open(data_path, 'rb')))
 
+        print(training_data.shape)
+
+        print('Generating labelled data...')
+
         data = []
 
         for interaction in training_data:
-            for i in range(len(interaction)):
-                if i < CNN_LOOKBACK - 1:
-                    first_n = CNN_LOOKBACK - 1 - i
-                    curr_x = [interaction[0, :-2]] * first_n
-                    curr_x += list(interaction[0:i + 1, 0:-2])
+            curr_x = list(interaction[:, :-2])
 
-                else:
-                    curr_x = list(interaction[i - CNN_LOOKBACK + 1:i + 1, :-2])
-
-                data.append([grab_image_data(curr_x), interaction[i][-2]])
+            data.append([grab_image_data(interaction), interaction[0][-2]])
 
         np.random.shuffle(data)
 
@@ -193,6 +196,11 @@ class CnnAatMarketTrainer(AatMarketTrainer):
         y_train = np.array(y_train)
         x_test = np.array(x_test)
         y_test = np.array(y_test)
+
+        print(x_train.shape)
+        print(y_train.shape)
+        print(x_test.shape)
+        print(y_test.shape)
 
         input_data_shape = x_train.shape[1:]
 
