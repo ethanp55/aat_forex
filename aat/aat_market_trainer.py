@@ -53,6 +53,7 @@ class KnnAatMarketTrainer(AatMarketTrainer):
         prediction = self.baseline
         new_assumptions = Assumptions(n_candles, ti_vals, prediction)
         new_tup = new_assumptions.create_aat_tuple()
+        # new_tup = new_assumptions.create_aat_bool_tuple()
 
         self.curr_trade_data.append(new_tup)
 

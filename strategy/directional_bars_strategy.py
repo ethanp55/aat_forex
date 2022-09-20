@@ -62,12 +62,12 @@ class DirectionalBarsStrategy(Strategy):
         if self.use_pullback and buy_signal:
             mid_open1, mid_high1, mid_low1, mid_close1 = market_data.loc[
                 market_data.index[curr_idx - 1], ['Mid_Open', 'Mid_High', 'Mid_Low', 'Mid_Close']]
-            buy_signal = mid_open1 > mid_close1 and abs(mid_close1 - mid_open1) <= 0.25 * abs(mid_high1 - mid_low1)
+            buy_signal = mid_open1 > mid_close1 and abs(mid_close1 - mid_open1) <= 0.35 * abs(mid_high1 - mid_low1)
 
         if self.use_pullback and sell_signal:
             mid_open1, mid_high1, mid_low1, mid_close1 = market_data.loc[
                 market_data.index[curr_idx - 1], ['Mid_Open', 'Mid_High', 'Mid_Low', 'Mid_Close']]
-            sell_signal = mid_open1 < mid_close1 and abs(mid_close1 - mid_open1) <= 0.25 * abs(mid_high1 - mid_low1)
+            sell_signal = mid_open1 < mid_close1 and abs(mid_close1 - mid_open1) <= 0.35 * abs(mid_high1 - mid_low1)
 
         highest_high, lowest_low = max(mid_highs), min(mid_lows)
 
@@ -107,9 +107,10 @@ class DirectionalBarsStrategy(Strategy):
 
         return trade
 
-    def run_strategy(self, currency_pair: CurrencyPairs, aat_trainer: Optional[AatMarketTrainer] = None,
+    def run_strategy(self, currency_pair: CurrencyPairs, date_range: str,
+                     aat_trainer: Optional[AatMarketTrainer] = None,
                      aat_tester: Optional[AatMarketTester] = None) -> StrategyResults:
         self.currency_pair = currency_pair
-        market_data = DataRetriever.get_data_for_pair(currency_pair)
+        market_data = DataRetriever.get_data_for_pair(currency_pair, date_range)
 
         return MarketSimulator.run_simulation(self, market_data, aat_trainer, aat_tester)

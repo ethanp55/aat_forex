@@ -42,6 +42,7 @@ class KnnAatMarketTester(AatMarketTester):
         prediction = self.baseline
         new_assumptions = Assumptions(n_candles, ti_vals, prediction)
         new_tup = new_assumptions.create_aat_tuple()
+        # new_tup = new_assumptions.create_aat_bool_tuple()
 
         if self.scaler is None:
             scaler_path = f'../aat/training_data/{self.currency_pair.value}_trained_knn_scaler_aat.pickle' if \

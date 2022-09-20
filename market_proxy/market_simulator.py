@@ -25,6 +25,8 @@ class MarketSimulator(object):
             cutoff_idx = int(len(market_data) * (1 - aat_tester.testing_data_percentage))
             market_data = market_data.iloc[cutoff_idx:, :]
 
+        market_data.reset_index(drop=True, inplace=True)
+
         reward, n_wins, n_losses, win_streak, loss_streak, curr_win_streak, curr_loss_streak, n_buys, n_sells, \
             day_fees = 0, 0, 0, 0, 0, 0, 0, 0, 0, 0  # Numerical results we keep track of
         pips_risked, trade, n_candles = [], None, 0
@@ -35,6 +37,12 @@ class MarketSimulator(object):
             # If there is no open trade, check to see if we should place one
             if trade is None:
                 trade = strategy.place_trade(idx, market_data)
+
+                if trade is not None and aat_tester is not None:
+                    trade_pred = aat_tester.make_prediction(idx, 0, market_data)
+
+                    if trade_pred < 0:
+                        trade = None
 
                 if trade is not None:
                     pips_risked.append(trade.pips_risked)

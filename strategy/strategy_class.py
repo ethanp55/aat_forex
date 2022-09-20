@@ -15,6 +15,6 @@ class Strategy:
     def place_trade(self, curr_idx: int, market_data: DataFrame) -> Optional[Trade]:
         pass
 
-    def run_strategy(self, currency_pair: CurrencyPairs, aat_trainer: Optional[AatMarketTrainer] = None) -> \
-            StrategyResults:
+    def run_strategy(self, currency_pair: CurrencyPairs, date_range: str,
+                     aat_trainer: Optional[AatMarketTrainer] = None) -> StrategyResults:
         pass
